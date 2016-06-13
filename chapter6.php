@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<!--
+To change this license header, choose License Headers in Project Properties.
+To change this template file, choose Tools | Templates
+and open the template in the editor.
+-->
+<html ng-app="spBlogger">
+    <head>
+        <meta charset="UTF-8">
+        <title></title>
+        <link rel="stylesheet" href="proyecto-Bootstrap/css/bootstrap.css" />
+        <link rel="stylesheet" href="proyecto-Bootstrap/css/bootstrap-theme.css" />
+        <script type="text/javascript" src="../js/jquery-1.11.0.js"></script>
+        <script type="text/javascript" src="proyecto-Bootstrap/js/bootstrap.min.js"></script>
+        <script type="text/javascript" src="../angular-1.4.8/angular.js"></script>
+        <script type="text/javascript" src="../angular-1.4.8/angular-ui-router.js"></script>
+        <script type="text/javascript">
+            angular.module('spBlogger',[
+                'spBlogger.controllers',
+                'ui.router' //this is the dependency on ui.router module
+            ]);
+            
+            angular.module('spBlogger').config(function($stateProvider, $urlRouterProvider){
+                $stateProvider.state('admin.allPosts',{
+                    url:'/posts',
+                    templateUrl: 'spBlogger.posts/posts.html',
+                    controller: 'PostController'
+                }).state('admin.hello',{
+                    url: '/hello',
+                    templateUrl: 'spBlogger.posts/hello.html',
+                }).state('admin.concurrentPost',{
+                    url:'/posts/update/:id',
+                    controller: 'PostDetailsController',
+                    templateUrl: 'spBlogger.posts/singlePost.html'
+                }).state('admin', {
+                    url: '/admin',
+//                    abstract:true,
+//                    controller:'AdminController',
+                    templateUrl:'spBlogger.posts/admin-home.html'
+                }).state('admin.postNew',{
+                    url:'/posts/new',
+                    controller: 'PostCreationController',
+                    templateUrl:'spBlogger.posts/admin-new-post.html'
+                    }).state('admin.postUpdate',{
+                    url:'/posts/:id',
+                    controller: 'PostUpdateController',
+                    templateUrl:'spBlogger.posts/admin-update-post.html'
+                    });
+//                $urlRouterProvider.otherwise('/posts'); // when no route match found redirect to /view1
+            });
+            
+            
+        
+            angular.module('spBlogger').run(function($state){ 
+                    $state.go('admin'); 
+            });
+        
+            angular.module('spBlogger').factory('postService', function() {
+                return {
+                    posts: [{
+                        id: 1,
+                        title: 'Simple title1',
+                        content: 'Sample content...',
+                        permalink: 'simple-title1',
+                        tags: 'Sandeep',
+                        keywords: 'sandeep',
+                        datePublished: new Date()
+                        }, {
+                        id: 2,
+                        title: 'Simple title2',
+                        content: 'Sample content...',
+                        permalink: 'simple-title2',
+                        tags: 'Sandeep',
+                        keywords: 'sandeep',
+                        datePublished: new Date()
+                        }, {
+                        id: 3,
+                        title: 'Simple title3',
+                        content: 'Sample content...',
+                        permalink: 'simple-title3',
+                        tags: 'Sandeep',
+                        keywords: 'sandeep',
+                        datePublished: new Date()
+                        }, {
+                        id: 4,
+                        title: 'Simple title4',
+                        content: 'Sample content...',
+                        permalink: 'simple-title4',
+                        tags: 'Sandeep',
+                        keywords: 'sandeep',
+                        datePublished: new Date()
+                    }],
+                    getAll: function() {
+                        return this.posts;
+                    },
+                    getPostById: function(id) {
+                        for (var i in this.posts) {
+                            if (this.posts[i].id == id) {
+                                return this.posts[i];
+                            }
+                        }
+                    },
+                    getPosicionPost: function(id){
+                        for (var i in this.posts) {
+                            if (this.posts[i].id == id) {
+//                                returns the posicion of the array
+                                return i;
+                            }
+                        }
+                    },
+                    setPost: function(post){
+                        post.id = this.setId();
+                        post.datePublished = new Date();
+                        this.posts.push(post);
+                        console.log(this.posts);
+                    },
+                    setId: function(){
+                        return this.posts.length+1;
+                    },
+                    updatePostById: function(post){
+//                        console.log('post before update ');
+                        console.log(this.posts);
+                        var posicionPost = this.getPosicionPost(post.id);
+                        console.log('concurrent post');
+                        console.log(post);
+                        this.posts[posicionPost] = post;
+                    },
+                    deletePostById: function(post){
+                        var posicionPost = this.getPosicionPost(post.id);
+//                        delete cocurrent post
+                        this.posts.splice(posicionPost,1);
+                        console.log(this.posts);
+                    }
+                }
+            });
+            
+            angular.module('spBlogger.controllers',[]).controller ('PostController',function($scope,postService){
+                    $scope.getAllPosts=function(){
+                        return postService.getAll();
+                    };
+                    //obtain the posts
+                    $scope.posts=$scope.getAllPosts();
+//                    delete concurrente post
+                    $scope.deletePost = function(post){
+                       console.log(post);
+                       postService.deletePostById(post);
+                    }
+                    
+            }).controller('PostDetailsController',function($stateParams,$state,$scope, postService){
+                $scope.getPostById=function(id){
+                    return postService.getPostById(id);
+                };
+                $scope.closePost=function(){
+                    $state.go('admin.allPosts');
+                };
+                
+                $scope.data = $scope.getPostById($stateParams.id);
+            }).controller('PostCreationController', function($scope, postService, $state){
+                $scope.post = {};
+                $scope.buttonText = 'Create';
+                $scope.savePost=function(){
+                    $scope.buttonText="Saving. . ."; //Once clicked change button text
+                    $scope.post.permalink=angular.lowercase($scope.post.title).replace(/[\s]/g,'-');//generate permalink
+                    postService.setPost($scope.post);
+                    $state.go('admin.allPosts'); //Once saved go to state `admin.postViewAll`
+                }
+            }).controller('PostUpdateController',function($scope,postService,$stateParams,$state){
+//                console.log($stateParams);
+//                obtain the post from backend. search by id
+                    $scope.post = postService.getPostById($stateParams.id);
+//                    set initial label for button
+                    $scope.buttonText = "Update";
+                    
+                    $scope.updatePost = function(){
+//                        once clicked change button text
+                        $scope.buttonText = "Saving...";
+                        $scope.post.permalink=angular.lowercase($scope.post.title).replace(/[\s]/g,'-');//generate permalink
+                        postService.updatePostById($scope.post);
+//                        once updated go to state admin.allPosts
+                        $state.go('admin.allPosts');
+                    }
+                
+            });
+        </script>
+    </head>
+    <body>
+        <div class="container">
+        <br/>
+        <div class="jumbotron text-center">
+        <h1>The Single Page Blogger</h1>
+        <p>One stop blogging solution</p>
+        </div>
+        <div ui-view></div>
+        <div class="row footer">
+        <div class="col-xs-12 text-center">
+        <p>The Single Page Blogger <app-version/></p>
+        </div>
+        </div>
+        </div>
+    </body>
+</html>
