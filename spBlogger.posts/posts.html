@@ -1,0 +1,27 @@
+<!--<div class="row">
+<div class="col-md-3" ng-repeat="post in posts track by $index">
+<div class="well">
+<h3 class="postTitle"><a ui-sref="admin.singlePost({id:post.id, permalink:post.permalink})">{{post.title}}</a></h3>
+<h5>By: {{post.author}} | {{post.datePublished}}</h5>
+</div>
+</div>
+</div>-->
+
+<div class="row">
+    <div class="col-xs-8">
+    <table class="table">
+        <tr>
+            <td><h3>View All Posts</h3></td>
+            <td></td>
+        </tr>
+        <tr ng-repeat="post in posts | orderBy:'-_id'">
+            <td>{{post.title}}</td>
+            <td>
+                <a class="btn btn-success" ui-sref="admin.concurrentPost({id:post.id})">Ver</a>
+                <a class="btn btn-primary" ui-sref="admin.postUpdate({id:post.id})">Edit</a>
+                <a class="btn btn-danger" ng-click="deletePost(post)">Delete</a>
+            </td>
+        </tr>
+    </table>
+    </div>
+</div>
